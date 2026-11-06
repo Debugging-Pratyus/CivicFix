@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useCallback, Suspense } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -61,6 +63,15 @@ interface DuplicateItem extends DuplicateSuggestion {
 }
 
 export default function AdminPage() {
+
+    const router = useRouter();
+  const supabase = getSupabaseBrowserClient();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.replace("/login");
+    router.refresh();
+  };
   // Navigation tab: "complaints" | "duplicates"
   const [activeTab, setActiveTab] = useState<"complaints" | "duplicates">("complaints");
 
@@ -265,6 +276,13 @@ export default function AdminPage() {
             </div>
 
             <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="rounded-xl border border-red-200 bg-white px-4 py-2 text-xs font-semibold text-red-600 hover:bg-red-50"
+            >
+              Logout
+            </button>
               <button
                 type="button"
                 onClick={() => {

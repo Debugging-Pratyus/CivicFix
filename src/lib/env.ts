@@ -12,6 +12,7 @@ import { z } from "zod";
 
 // ─── Client-safe variables (all prefixed NEXT_PUBLIC_) ───────────────────────
 const clientSchema = z.object({
+
   NEXT_PUBLIC_SUPABASE_URL: z
     .string()
     .url("NEXT_PUBLIC_SUPABASE_URL must be a valid URL"),
@@ -33,8 +34,11 @@ const serverSchema = clientSchema.extend({
 });
 
 // ─── Parse and export ────────────────────────────────────────────────────────
-function parseEnv<T extends z.ZodTypeAny>(schema: T): z.infer<T> {
-  const result = schema.safeParse(process.env);
+function parseEnv<T extends z.ZodTypeAny>(
+  schema: T,
+  source: Record<string, unknown> = process.env
+): z.infer<T> {
+  const result = schema.safeParse(source);
   if (!result.success) {
     const formatted = result.error.issues
       .map((i) => `  • ${i.path.join(".")}: ${i.message}`)
@@ -53,7 +57,14 @@ let _serverEnv: z.infer<typeof serverSchema> | null = null;
  * Safe to import in browser code.
  */
 export function getClientEnv(): z.infer<typeof clientSchema> {
-  if (!_clientEnv) _clientEnv = parseEnv(clientSchema);
+  if (!_clientEnv) {
+    _clientEnv = parseEnv(clientSchema, {
+      NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+    });
+  }
+
   return _clientEnv;
 }
 
